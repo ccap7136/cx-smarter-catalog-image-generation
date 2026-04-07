@@ -1,0 +1,9 @@
+streamlit==1.33.0
+google-cloud-storage==2.19.0
+google-genai==1.66.0
+google-cloud-aiplatform==1.137.0
+tqdm==4.66.4
+Pillow==11.2.1
+ImageHash==4.3.1
+pandas==2.2.2
+reportlab==4.2.0
