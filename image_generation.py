@@ -331,7 +331,6 @@ def main():
 
     # Create input file
     print("\nGenerating input data for generation...")
-    product_dict = dict(list(product_dict.items())[:5])
     product_dict = compose_prompts(product_dict)
     save_product_dict(product_dict, f"{batch_job}/product_dict_generation.pkl")
 
@@ -359,7 +358,7 @@ def main():
         else:
             print(f"Generated requests for {len(input_data)} products.")
 
-        if 'pro' not in args.model.lower() or '2' not in args.model.lower():
+        if 'pro' in args.model.lower() or '2' in args.model.lower():
             raise ValueError("Invalid model name. Selected model is not available for batch jobs.")
         else:
             try:
