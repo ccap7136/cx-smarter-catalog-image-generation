@@ -12,7 +12,7 @@ from parse_predictions import parse_generation_prediction, generation_preds_to_c
 from run_batch_job import monitor_batch_prediction_job, run_batch_prediction_job
 from rule_selection import *
 
-MAX_WORKERS = 4  # adjust based on rate limits
+MAX_WORKERS = 5  # adjust based on rate limits
 
 SYSTEM_INSTRUCTIONS = """
 You are a professional food product image generator.
