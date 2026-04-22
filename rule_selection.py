@@ -33,40 +33,31 @@ PROTEIN_RULES = {
         • Cod / haddock / pollock: pale white flesh with large, delicate flakes that separate easily.
         • Sea bass: white to off-white flesh with firm muscle and small to medium flakes.
         • Snapper: white to light pink flesh with firm muscle, fine flakes, and a smooth surface texture.
-        • Catfish: pale off-white to light pink flesh with smooth, slightly translucent muscle and very 
-          fine flake structure; typically thicker and more uniform in fillets.
+        • Catfish: pale off-white to light pink flesh with smooth, slightly translucent muscle and very fine flake structure; typically thicker and more uniform in fillets.
         • Mackerel: darker flesh with visible oiliness and pronounced muscle grain.
       Do not depict a generic fish texture that contradicts the species.
 
     - Cut type:
       Respect the anatomical geometry of the cut:
-      • Fillet: a long, tapered piece of fish muscle removed from the side of the fish, 
-        typically thicker at one end and thinner at the tail end.
-      • Loin: a thick, rectangular or block-like center cut from the upper back of the fish, 
-        usually uniform in thickness and without tail tapering.
-      • Steak (cross-section cut): a vertical slice through the whole fish body, often showing a 
-        central bone and symmetrical muscle sections.
+      • Fillet: a long, tapered piece of fish muscle removed from the side of the fish, typically thicker at one end and thinner at the tail end.
+      • Loin: a thick, rectangular or block-like center cut from the upper back of the fish, usually uniform in thickness and without tail tapering.
+      • Steak (cross-section cut): a vertical slice through the whole fish body, often showing a central bone and symmetrical muscle sections.
       • Whole fish: intact fish body with natural proportions and anatomical features.
-      • Bias cut (salmon): thin slices cut diagonally across the fillet at an angle rather than 
-        straight across. The slices should appear elongated and slightly oval with smooth edges, 
-        showing the salmon’s orange flesh and white fat lines running diagonally across the slice.
-      • Shank (e.g. catfish): a thick, round, bone-in cross-section with a visible central bone 
-        and ring of flesh forming a steak-like shape.
+      • Bias cut (salmon): thin slices cut diagonally across the fillet at an angle rather than straight across. The slices should appear elongated and slightly oval with smooth edges, showing the salmon’s orange flesh and white fat lines running diagonally across the slice.
+      • Shank (e.g. catfish): a thick, round, bone-in cross-section with a visible central bone and ring of flesh forming a steak-like shape.
     
     - Preparation:
       Accurately depict the physical preparation (e.g., whole, filleted, sliced, cubed, minced, flakes).
 
     - Muscle structure (CRITICAL):
-      Respect the natural muscle flake pattern of the species. Do not depict 
-      unrealistic muscle patterns.
+      Respect the natural muscle flake pattern of the species. Do not depict unrealistic muscle patterns.
       • White fish (cod, haddock): large, distinct flakes that separate easily.
       • Salmonids: medium flakes with visible fat marbling.
       • Tuna: dense, smooth muscle with minimal flaking.
 
     - Skin status (CRITICAL):
       If skinless is specified:
-       • The fish must have NO skin whatsoever: no skin patches, no silver membrane, 
-       no scale texture, and no skin-colored edges. 
+       • The fish must have NO skin whatsoever: no skin patches, no silver membrane, no scale texture, and no skin-colored edges. 
        • Only exposed flesh should be visible.
        • Do not add skin by default.
 
@@ -89,8 +80,7 @@ PROTEIN_RULES = {
 
     'PORK': """
     - Pork cut (CRITICAL):
-      Identify the exact pork cut (e.g., pork loin, pork shoulder/Boston butt, pork belly, tenderloin, ham, ribs) 
-      and match its characteristic muscle structure, fat distribution, and proportions.
+      Identify the exact pork cut (e.g., pork loin, pork shoulder/Boston butt, pork belly, tenderloin, ham, ribs) and match its characteristic muscle structure, fat distribution, and proportions.
 
       Visual cues by cut:
       • Pork loin: lean meat with a relatively uniform cylindrical or rectangular shape and a thin outer fat cap.
@@ -101,15 +91,10 @@ PROTEIN_RULES = {
 
     - Rib type (CRITICAL):
       When the product is ribs, strictly match the correct rib category and anatomy:
-      • Baby back ribs: curved rack from the upper ribcage near the spine. Bones are shorter, curved, and closely
-       spaced with more meat on top of the bones and less between them.
-      • Spare ribs: flatter rack from the lower ribcage. Bones are longer and straighter with wider spacing, 
-      and the meat layer is thinner with more visible fat.
-      • St. Louis–style ribs: trimmed version of spare ribs with a more rectangular rack shape, straight bone 
-      line, and removed rib tips.
-      • Country-style ribs (boneless): thick, meat-heavy pieces cut from the pork shoulder/loin area. 
-      They must clearly appear as a boneless cut of pork with no bones present. They appear as chunky, irregular 
-      strips or blocks of meat with visible marbling and connective tissue.
+      • Baby back ribs: curved rack from the upper ribcage near the spine. Bones are shorter, curved, and closely spaced with more meat on top of the bones and less between them.
+      • Spare ribs: flatter rack from the lower ribcage. Bones are longer and straighter with wider spacing, and the meat layer is thinner with more visible fat.
+      • St. Louis–style ribs: trimmed version of spare ribs with a more rectangular rack shape, straight bone line, and removed rib tips.
+      • Country-style ribs (boneless): thick, meat-heavy pieces cut from the pork shoulder/loin area. They must clearly appear as a boneless cut of pork with no bones present. They appear as chunky, irregular strips or blocks of meat with visible marbling and connective tissue.
 
       Do not confuse these rib types. For example:
       • Do not depict curved baby back racks when spare ribs are specified.
@@ -176,9 +161,8 @@ PROTEIN_RULES = {
     - Preparation:
       Depict the physical preparation accurately (e.g., whole, sliced, diced, ground, chopped, pounded).
       • Sliced: show realistic slice thickness and natural muscle grain.
-      - If a slice includes a “tail” (e.g., “1 Inch Tail”), depict the tail tapering from the main body with the correct thickness (e.g., 1 inch thick).
+      - If a slice includes a “tail” (e.g., “1 Inch Tail”), depict the tail tapering from the main body with the correct thickness (e.g., 1 inch thick). Maintain the cut’s geometry while showing the thinner taper at the end.
       - If the preparation method is not specified, depict the beef as a single intact cut of meat, uncut and not sliced into portions.
-      Maintain the cut’s geometry while showing the thinner taper at the end.
       • Ground or chopped: depict loose strands or small chunks of meat.
       • Cube steak: include tenderized square indentations; maintain flat, thin profile.
 
@@ -208,24 +192,18 @@ PROTEIN_RULES = {
       • Tenderloin: a thin elongated strip of white meat attached beneath the breast.
 
     - Size:
-      • For poultry breast depictions, enforce a realistic, lean appearance. 
-      Do not generate overly plump, thick, or inflated shapes; 
-      the breast should be visibly thinner and naturally proportioned.
-      • When depicting sausages, ensure their size matches the product’s 
-      specified dimensions or weight.
+      • For poultry breast depictions, enforce a realistic, lean appearance. Do not generate overly plump, thick, or inflated shapes; the breast should be visibly thinner and naturally proportioned.
+      • When depicting sausages, ensure their size matches the product’s specified dimensions or weight.
 
     - Color:
       • Ensure the meat color matches the cut.
       • Chicken breast meat must appear light white or pale pink.
       • Chicken thigh meat must appear darker brown or reddish-brown.
       • Do not depict breast meat as dark or thigh meat as white.
-      • When a product includes multiple meat types 
-      (e.g., thigh + breast mix), respect the specified ratio
-       when depicting color (e.g., 60% dark meat / 40% white meat).
+      • When a product includes multiple meat types (e.g., thigh + breast mix), respect the specified ratio when depicting color (e.g., 60% dark meat / 40% white meat).
 
     - Bone status:
-      • If bone-in, ensure bones are visible and anatomically correct for the cut 
-      (e.g., breastbone for bone-in breast, drum bone for drumstick).
+      • If bone-in, ensure bones are visible and anatomically correct for the cut (e.g., breastbone for bone-in breast, drum bone for drumstick).
       • If deboned, ensure no bones are visible or implied.
       • When the product description includes the term ‘boned’, treat the product as deboned. Do not depict any bones. If the description includes ‘drum on’, retain the bones in the drum portion.”
       • If partially deboned (e.g., first joint on, second joint removed),reflect this precisely.
