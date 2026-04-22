@@ -1,15 +1,7 @@
-import argparse
-import base64
 from google import genai
 from google.genai import types
-import pickle
-from tqdm import tqdm
-import random
-import time
 
 from data_utils import *
-from parse_predictions import parse_generation_prediction, generation_preds_to_csv, download_locally
-from run_batch_job import monitor_batch_prediction_job, run_batch_prediction_job
 
 MAX_WORKERS = 5  # adjust based on rate limits
 
@@ -52,7 +44,8 @@ PROTEIN_RULES = {
       • Steak (cross-section cut): a vertical slice through the whole fish body, often showing a central bone and symmetrical muscle sections.
       • Whole fish: intact fish body with natural proportions and anatomical features.
       • Bias cut (salmon): thin slices cut diagonally across the fillet at an angle rather than straight across. The slices should appear elongated and slightly oval with smooth edges, showing the salmon’s orange flesh and white fat lines running diagonally across the slice.
-
+      • Shank (e.g. catfish): a thick, round, bone-in cross-section with a visible central bone and ring of flesh forming a steak-like shape.
+    
     - Preparation:
       Accurately depict the physical preparation (e.g., whole, filleted, sliced, cubed, minced, flakes).
 
@@ -114,6 +107,7 @@ PROTEIN_RULES = {
       • Tenderloin: narrow cylindrical shape tapering slightly at the ends.
       • Loin roast: thicker rectangular or cylindrical roast.
       • Country-style ribs: thick individual strips or chunks rather than a rib rack.
+      • Pork butt: large, irregular roast with marbled fat and connective tissue. Always depict it pulled into shredded strands of meat.
 
     - Fat distribution:
       Ensure the fat pattern matches the cut.
@@ -123,7 +117,8 @@ PROTEIN_RULES = {
       • Ribs: fat concentrated around and between the rib bones.
 
     - Preparation:
-      Depict the physical preparation accurately (e.g., whole, sliced, cubed, diced, ground, chopped).
+      Depict the physical preparation accurately 
+      (e.g., whole, sliced, cubed, diced, ground, chopped).
       • If sliced, show natural muscle grain and realistic thickness.
       • If cubed or diced, ensure consistent cube size.
       • If ground or minced, depict loose strands of ground meat.
@@ -146,6 +141,7 @@ PROTEIN_RULES = {
       • Cube steak: top round or top sirloin mechanically tenderized, leaving small square indentations on the surface; flat and thin; not actually cut into cubes.
       • Chuck: thicker, irregularly shaped, heavily marbled with connective tissue; often used for roasting or slow cooking.
       • Steak Strip: long, rectangular slice of beef, usually cut from a larger steak. It has a uniform thickness, visible muscle grain, and light marbling, with clean edges and a defined, elongated shape.
+      • Veal: a lean, tender cut with a smooth, slightly rounded surface, uniform in shape, and pale pink to light beige in color, showing minimal marbling and delicate texture.
 
     - Shape:
       Account for the geometric shape and size of the cut.
@@ -165,8 +161,8 @@ PROTEIN_RULES = {
     - Preparation:
       Depict the physical preparation accurately (e.g., whole, sliced, diced, ground, chopped, pounded).
       • Sliced: show realistic slice thickness and natural muscle grain.
-      - If a slice includes a “tail” (e.g., “1 Inch Tail”), depict the tail tapering from the main body with the correct thickness (e.g., 1 inch thick). 
-      Maintain the cut’s geometry while showing the thinner taper at the end.
+      - If a slice includes a “tail” (e.g., “1 Inch Tail”), depict the tail tapering from the main body with the correct thickness (e.g., 1 inch thick). Maintain the cut’s geometry while showing the thinner taper at the end.
+      - If the preparation method is not specified, depict the beef as a single intact cut of meat, uncut and not sliced into portions.
       • Ground or chopped: depict loose strands or small chunks of meat.
       • Cube steak: include tenderized square indentations; maintain flat, thin profile.
 
@@ -195,9 +191,9 @@ PROTEIN_RULES = {
       • Wing: small segmented cut composed of drumette, flat, and tip.
       • Tenderloin: a thin elongated strip of white meat attached beneath the breast.
 
-    - Shape:
+    - Size:
       • For poultry breast depictions, enforce a realistic, lean appearance. Do not generate overly plump, thick, or inflated shapes; the breast should be visibly thinner and naturally proportioned.
-      • When depicting sausages, ensure their size matches the product’s specified dimensions or weight
+      • When depicting sausages, ensure their size matches the product’s specified dimensions or weight.
 
     - Color:
       • Ensure the meat color matches the cut.
@@ -212,7 +208,6 @@ PROTEIN_RULES = {
       • When the product description includes the term ‘boned’, treat the product as deboned. Do not depict any bones. If the description includes ‘drum on’, retain the bones in the drum portion.”
       • If partially deboned (e.g., first joint on, second joint removed),reflect this precisely.
 
-
     - Skin status:
       If skin-off is specified:   
        • Only exposed flesh should be visible.
@@ -222,7 +217,8 @@ PROTEIN_RULES = {
     - Preparation:
       • Account for the physical preparation (e.g., whole, split, spatchcocked, butterflied, diced, sliced, ground, pounded thin).
       • If spatchcocked or split, depict a whole chicken cut entirely through the backbone, opened and laid flat, with neck and giblets removed. Show each half clearly detached from each other.
-      • If diced, ensure realistic cube size and accurate meat-type proportions.
+      • If diced, ensure realistic cube size and accurate meat-type proportions. Depict the meat as pre-cut into raw-style cubes (uniform, clean-edged pieces typical of cutting before cooking), but shown in its cooked state with appropriate color, texture, and doneness.
+
     """
 }
 
@@ -302,4 +298,3 @@ def select_relevant_rules(product_id, product_info,
         print(e)
 
     return rule_selection
-
