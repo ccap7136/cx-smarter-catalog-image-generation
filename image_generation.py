@@ -7,10 +7,9 @@ from tqdm import tqdm
 import random
 import time
 
-from data_utils import *
+from rule_selection import *
 from parse_predictions import parse_generation_prediction, generation_preds_to_csv, download_locally
 from run_batch_job import monitor_batch_prediction_job, run_batch_prediction_job
-from rule_selection import *
 
 MAX_WORKERS = 5  # adjust based on rate limits
 
@@ -18,7 +17,19 @@ SYSTEM_INSTRUCTIONS = """
 You are a professional food product image generator.
 Your primary goal is to create accurate, high-quality, e-commerce-ready food photographs based on provided product data and image instructions.
 """
-
+# You must always adhere to the following core principles:
+# 1. The structured product data provided (title, description, attributes) is factual ground truth and must be accurately represented in the image.
+# 2. For every product, you must:
+#     - Identify its protein category.
+#     - Apply species-specific anatomical accuracy.
+#     - Enforce correct bone, skin, trim, and portion structure corresponding to the product description and category.
+# 3. Depict the product fully cooked and professionally plated as part of a complete main dish.
+# 4. Include any side components on the same plate as the main dish.
+# 5. The entire dish must be fully visible in frame, with no cropping at the edges.
+# 6. Place the dish in a natural, realistic lifestyle setting. Avoid studio-only or abstract backgrounds.
+# 7. Prioritize realistic and appetizing aesthetics in all generated images. Ensure the image is realistic and it does not look fake.
+# 8. No humans or human hands visible. No labels, writing or letters.
+# """
 
 CONTENT_CONFIG_REF = {
     "temperature": 0.4,
@@ -86,6 +97,7 @@ def compose_prompts(product_dict, rule_selection=True):
                 1. Using the provided image as a reference:
                 - Use the provided image strictly as a reference to the protein's physical characteristics 
                 (cut, shape, thickness, skin/bone presence, marbling, and muscle structure).  
+                - If the reference image depicts a raw product, ensure that the generated image depicts the same product in a cooked state.
                 - CRITICAL: Do not copy the background, props, lighting, or plating. Use a new lifestyle setting.
                 
                 2. Composition Requirements:
@@ -99,17 +111,17 @@ def compose_prompts(product_dict, rule_selection=True):
 
         else:
             prompt = f"""
-                Task: Generate an accurate, high-quality, e-commerce-ready food photograph based on provided 
+                Task: Generate an accurate, high-quality, e-commerce-ready food photograph based on provided
                 product data, accuracy rules and image instructions.
                 The food item should be in a cooked state and a styled setting.
                 The product information is factual and should be treated as ground truth when generating the image.
-                
+
                 **PRODUCT INFORMATION**
                 Product ID: {product_id}##
                 Product Title: "{product_title}".
                 Product Description: "{product_description}".
                 Product Attributes: {product_attributes_str}
-                
+
                 **ACCURACY RULES**
                 The final image must depict the product exactly as described, respecting the following:
                 {relevant_rules}
@@ -118,8 +130,8 @@ def compose_prompts(product_dict, rule_selection=True):
                 Composition Requirements:
                 - The product must be the primary visual focus, clearly visible and unobstructed.
                 - The entire dish must be fully visible in frame, with no cropping at the edges.
-                - The image must look like a real professional food photograph, with natural lighting, 
-                realistic textures, and accurate colors. 
+                - The image must look like a real professional food photograph, with natural lighting,
+                realistic textures, and accurate colors.
                 - Avoid any artificial or computer-generated appearance.
                 - No humans or human hands visible, nor labels, writing or letters.
             """
@@ -128,7 +140,7 @@ def compose_prompts(product_dict, rule_selection=True):
     return product_dict
 
 
-def generate_batch_requests_for_generation(product_dict, n_images_per_product=6):
+def generate_batch_requests_for_generation(product_dict, n_images_per_product=5):
     lines = []
     for pid, prod_info in tqdm(product_dict.items()):
 
@@ -204,12 +216,6 @@ def generate_contents(product_dict, images_per_product):
             config = CONTENT_CONFIG_REF
         else:
             config = CONTENT_CONFIG_RAW
-        # sys_instr = line['request']['systemInstruction']
-        # config = line['request']['generationConfig']
-        # prompt = line['request']['contents'][0]['parts'][0]['text']
-        # prod_id = prompt.split("ID: ")[1].split("\n")[0]
-        # aspect_ratio = "5:4"
-        # resolution = "2K"
 
         content_dict = {
                         'sys_instr': SYSTEM_INSTRUCTIONS,
@@ -228,6 +234,7 @@ def generate_contents(product_dict, images_per_product):
 def generate_image(content_dict, model):
     sys_instr = content_dict['sys_instr']
     config = content_dict['config']
+    print(config)
     prompt = content_dict['prompt']
     aspect_ratio = content_dict['aspect_ratio']
     resolution = content_dict['resolution']
@@ -265,6 +272,7 @@ def generate_image(content_dict, model):
         except Exception as e:
             wait = (2 ** attempt) + random.uniform(0, 1)
             print(f"Retrying in {wait:.2f}s...")
+            print(e)
             time.sleep(wait)
 
     else:
@@ -275,7 +283,6 @@ def generate_image(content_dict, model):
     if elapsed < min_delay:
         time.sleep(min_delay - elapsed)
     return response
-
 
 
 def main():
@@ -331,6 +338,7 @@ def main():
 
     # Create input file
     print("\nGenerating input data for generation...")
+    product_dict = dict(list(product_dict.items()))
     product_dict = compose_prompts(product_dict)
     save_product_dict(product_dict, f"{batch_job}/product_dict_generation.pkl")
 
@@ -386,6 +394,7 @@ def main():
                 )
 
     else:
+            print(f'\nGenerating images using {args.model}')
             contents = generate_contents(product_dict, args.images_per_product)
             results = []
             model = LLM_MODELS[args.model]
@@ -401,6 +410,7 @@ def main():
             save_product_dict(product_dict, f"{batch_job}/product_dict_generation.pkl")
 
     batch_output = []
+    batch_bool = None
     # Output for batch predictions
     if f"predictions_generation.jsonl" in os.listdir(f"./{batch_job}"):
         print(os.listdir(f"./{batch_job}"))
@@ -433,4 +443,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
