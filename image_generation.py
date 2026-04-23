@@ -17,19 +17,7 @@ SYSTEM_INSTRUCTIONS = """
 You are a professional food product image generator.
 Your primary goal is to create accurate, high-quality, e-commerce-ready food photographs based on provided product data and image instructions.
 """
-# You must always adhere to the following core principles:
-# 1. The structured product data provided (title, description, attributes) is factual ground truth and must be accurately represented in the image.
-# 2. For every product, you must:
-#     - Identify its protein category.
-#     - Apply species-specific anatomical accuracy.
-#     - Enforce correct bone, skin, trim, and portion structure corresponding to the product description and category.
-# 3. Depict the product fully cooked and professionally plated as part of a complete main dish.
-# 4. Include any side components on the same plate as the main dish.
-# 5. The entire dish must be fully visible in frame, with no cropping at the edges.
-# 6. Place the dish in a natural, realistic lifestyle setting. Avoid studio-only or abstract backgrounds.
-# 7. Prioritize realistic and appetizing aesthetics in all generated images. Ensure the image is realistic and it does not look fake.
-# 8. No humans or human hands visible. No labels, writing or letters.
-# """
+
 
 CONTENT_CONFIG_REF = {
     "temperature": 0.4,
@@ -234,7 +222,6 @@ def generate_contents(product_dict, images_per_product):
 def generate_image(content_dict, model):
     sys_instr = content_dict['sys_instr']
     config = content_dict['config']
-    print(config)
     prompt = content_dict['prompt']
     aspect_ratio = content_dict['aspect_ratio']
     resolution = content_dict['resolution']
