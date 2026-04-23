@@ -223,7 +223,8 @@ def main():
 
     # Read input file and process product information
     print("Loading product information ...")
-    product_dict = process_product_information(DATA["INPUT_PRODUCT_FILE"])
+    input_product_file = args.input_product_file
+    product_dict = process_product_information(input_product_file)
 
     # Filtering by product ids
     if args.product_ids:
