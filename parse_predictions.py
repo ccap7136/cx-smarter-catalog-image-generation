@@ -39,10 +39,6 @@ def parse_generation_prediction(output, product_info, batch=True):
             except Exception as e:
                 print("Failed to fetch image")
                 print(e)
-            print()
-            print(prod_id)
-            print(len(product_info[prod_id]['generation']['generated_images'].keys()))
-            print()
     return product_info
 
 
