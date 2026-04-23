@@ -89,7 +89,7 @@ def parse_assets(xml_path, asset_data=[], gcp_prefix=None):
             img_path = f"gs://{GCS['BUCKET']}/{gcp_prefix}{entity_map[asset_id]}"
         else:
             img_path = xml_path.replace("assetProperties.xml", entity_map[asset_id])
-        asset_data.append({'supc': supc, 'description': desc, 'image_path': img_path, 'business_center': bc,
+        asset_data.append({'supc': supc, 'description': desc, 'image_path': img_path,
                            'published': published, 'sysco_brand': sysco_brand})
     return asset_data
 
@@ -123,18 +123,12 @@ def fetch_reference_images(local_folder=None, bucket=None):
                 ref_img_dict = {'supc': '0000000',
                                 'description': description,
                                 'image_path': path,
-                                # 'business_center': business_center,
                                 'sysco_brand': True,
                                 'published': False,}
                 asset_data.append(ref_img_dict)
             elif 'url_images' in blob.name:
                 supc = blob.name.split("url_images/")[-1].split("_")[0]
                 description = blob.name.split("url_images/")[-1].split("_")[1].split(".")[0]
-                print('-'*88)
-                print(blob.name)
-                print(supc)
-                print(description)
-                print('-' * 88)
                 path = f"gs://{bucket_name}/{blob.name}"
                 if 'PORK' in description:
                     business_center = "Pork"
