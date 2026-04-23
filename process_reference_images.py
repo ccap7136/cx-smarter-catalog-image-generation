@@ -89,7 +89,7 @@ def parse_assets(xml_path, asset_data=[], gcp_prefix=None):
             img_path = f"gs://{GCS['BUCKET']}/{gcp_prefix}{entity_map[asset_id]}"
         else:
             img_path = xml_path.replace("assetProperties.xml", entity_map[asset_id])
-        asset_data.append({'supc': supc, 'description': desc, 'image_path': img_path, #'business_center': bc,
+        asset_data.append({'supc': supc, 'description': desc, 'image_path': img_path, 'business_center': bc,
                            'published': published, 'sysco_brand': sysco_brand})
     return asset_data
 
@@ -149,14 +149,13 @@ def fetch_reference_images(local_folder=None, bucket=None):
                                 'published': False,}
                 asset_data.append(ref_img_dict)
 
-            # if blob.name.endswith(".xml"):
-            #     temp_asset_file = "assets_temp.xml"
-            #     blob.download_to_filename(temp_asset_file)
-            #     blob_prefix = blob.name.replace("assetProperties.xml", "")
-            #     asset_data = parse_assets(temp_asset_file, asset_data, gcp_prefix=blob_prefix)
+            if blob.name.endswith(".xml"):
+                temp_asset_file = "assets_temp.xml"
+                blob.download_to_filename(temp_asset_file)
+                blob_prefix = blob.name.replace("assetProperties.xml", "")
+                asset_data = parse_assets(temp_asset_file, asset_data, gcp_prefix=blob_prefix)
 
     print(f"Collected {len(asset_data)} reference images.\n")
-    print(str(asset_data)[:1111])
     return asset_data
 
 
@@ -253,7 +252,6 @@ def main():
         print("No reference image bucket selected")
     product_dict = select_reference_images(product_dict, asset_data)
 
-    print(str(product_dict)[:1111])
     # Saving product dict (for parsing predictions)
     save_product_dict(product_dict, f"{batch_job}/{DATA["PRODUCT_DICT_FILE"]}")
 
