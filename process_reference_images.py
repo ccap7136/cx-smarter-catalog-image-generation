@@ -89,7 +89,7 @@ def parse_assets(xml_path, asset_data=[], gcp_prefix=None):
             img_path = f"gs://{GCS['BUCKET']}/{gcp_prefix}{entity_map[asset_id]}"
         else:
             img_path = xml_path.replace("assetProperties.xml", entity_map[asset_id])
-        asset_data.append({'supc': supc, 'description': desc, 'image_path': img_path, 'business_center': bc,
+        asset_data.append({'supc': supc, 'description': desc, 'image_path': img_path,
                            'published': published, 'sysco_brand': sysco_brand})
     return asset_data
 
@@ -112,6 +112,37 @@ def fetch_reference_images(local_folder=None, bucket=None):
         prefix = "reference_images"
         blobs = client.list_blobs(bucket_name, prefix=prefix)
         for blob in blobs:
+            if 'buckhead_guide' in blob.name:
+                description = blob.name.split("/")[-1].split("_")[0]
+                path = f"gs://{bucket_name}/{blob.name}"
+                if 'PORK' in description:
+                    business_center = "Pork"
+                else:
+                    business_center = "Beef"
+
+                ref_img_dict = {'supc': '0000000',
+                                'description': description,
+                                'image_path': path,
+                                'sysco_brand': True,
+                                'published': False,}
+                asset_data.append(ref_img_dict)
+            elif 'url_images' in blob.name:
+                supc = blob.name.split("url_images/")[-1].split("_")[0]
+                description = blob.name.split("url_images/")[-1].split("_")[1].split(".")[0]
+                path = f"gs://{bucket_name}/{blob.name}"
+                if 'PORK' in description:
+                    business_center = "Pork"
+                else:
+                    business_center = "Beef"
+
+                ref_img_dict = {'supc': supc,
+                                'description': description,
+                                'image_path': path,
+                                # 'business_center': business_center,
+                                'sysco_brand': True,
+                                'published': False,}
+                asset_data.append(ref_img_dict)
+
             if blob.name.endswith(".xml"):
                 temp_asset_file = "assets_temp.xml"
                 blob.download_to_filename(temp_asset_file)
@@ -145,7 +176,6 @@ def select_reference_images(products, asset_data):
         sim_img = None
         for asset_dict in asset_data:
             material_description = asset_dict['description']
-
             sem_sim = semantic_similarity(title, material_description)
 
             # Ignore contradictory terms
