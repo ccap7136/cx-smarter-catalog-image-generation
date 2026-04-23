@@ -22,6 +22,7 @@ def parse_generation_prediction(output, product_info, batch=True):
                 image_id = str(uuid.uuid4())
                 image_str = line['response']['candidates'][0]['content']['parts'][0]['inlineData']['data']
                 product_info[prod_id]['generation']['generated_images'][image_id] = {'image': image_str}
+                print(f"Successfully fetched image for product {prod_id}")
             except Exception as e:
                 print("Failed to fetch image")
                 print(e)
@@ -38,6 +39,10 @@ def parse_generation_prediction(output, product_info, batch=True):
             except Exception as e:
                 print("Failed to fetch image")
                 print(e)
+            print()
+            print(prod_id)
+            print(len(product_info[prod_id]['generation']['generated_images'].keys()))
+            print()
     return product_info
 
 
@@ -47,7 +52,7 @@ def generation_preds_to_csv(batch_job):
         product_dict = pickle.load(f)
 
     all_rows = []
-    for prod_id, prod_info in product_dict.items():
+    for prod_id, prod_info in tqdm(product_dict.items()):
         row = {
             'product_id': prod_id,
             'product_title': prod_info.get('product_title', ""),
@@ -283,7 +288,7 @@ def main():
     os.makedirs(batch_job, exist_ok=True)
 
     # Load product dict
-    prod_dict_path = f"nano_banana/product_dict_{step}.pkl"
+    prod_dict_path = f"{batch_job}/product_dict_{step}.pkl"
     print("Loading prod dict from {}".format(prod_dict_path))
     with open(prod_dict_path, "rb") as f:
         product_dict = pickle.load(f)
@@ -312,7 +317,8 @@ def main():
     # Parse Predictions
     if step == 'generation':
         product_dict = parse_generation_prediction(batch_output, product_dict, batch=batch_bool)
-        save_product_dict(product_dict, f"{batch_job}/product_dict_generation.pkl")
+        save_product_dict(product_dict, f"{batch_job}/product_dict_generation_parsed.pkl")
+        print("Loading predictions into a dataframe...")
         df = generation_preds_to_csv(batch_job)
     elif step == 'validation':
         product_dict = parse_validation_prediction(batch_output, product_dict)
