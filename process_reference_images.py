@@ -12,142 +12,34 @@ from data_utils import *
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
-def extract_entities(xml_text):
-    """
-    Extract entity declarations:
-    <!ENTITY asset0000001 SYSTEM "12PX_Scale_A-S.JPG" NDATA image_jpeg>
-
-    Returns dict:
-    {
-        "asset0000001": "12PX_Scale_A-S.JPG",
-        "asset0000002": "7056839-50794297871553_C1CH-S.JPG",
-        ...
-    }
-    """
-    entity_pattern = r'<!ENTITY\s+(asset\d+)\s+SYSTEM\s+"([^"]+)"'
-    return dict(re.findall(entity_pattern, xml_text))
-
-
-def extract_metadata(metadata, key):
-    """
-    Extract SUPC from METADATA.
-    """
-
-    # Case 1: <SUPC>1234</SUPC>
-    tag = metadata.find(key)
-    if tag is not None and tag.text:
-        return tag.text.strip()
-
-    # Case 2: SUPC attribute <METADATA SUPC="1234">
-    if key in metadata.attrib:
-        return metadata.attrib[key]
-
-    # Case 3: SUPC attribute inside nested tags
-    for child in metadata.iter():
-        if key in child.attrib:
-            return child.attrib[key]
-
-    return None
-
-
-def parse_assets(xml_path, asset_data=[], gcp_prefix=None):
-    """
-    Main function: links asset_id → SYSTEM filename → SUPC.
-    """
-    # Read raw XML text to parse entity declarations
-    with open(xml_path, 'r', encoding='utf-8') as f:
-        xml_text = f.read()
-
-    # Step 1: Extract SYSTEM filenames from entity declarations
-    entity_map = extract_entities(xml_text)
-    tree = ET.ElementTree(ET.fromstring(xml_text))
-    root = tree.getroot()
-
-    # Step 2: Extract supc
-    for asset in root.findall(".//ASSET"):
-        metadata = asset.find("METADATA")
-        asset_id = asset.find("CONTENT").find("MASTER").find("OBJECT").get("FILE")
-
-        # SUPC
-        supc = extract_metadata(metadata, 'SUPC')
-        desc = extract_metadata(metadata, 'MATERIALDESCRIPTION')
-        bc = extract_metadata(metadata, 'LEVEL_2')
-        published = extract_metadata(metadata, 'IMAGE_STATUS_CODE')
-        brand = extract_metadata(metadata, 'BRANDCODE')
-
-        if published.lower() == 'published':
-            published = True
-        else:
-            published = False
-
-        if brand.lower() == 'y':
-            sysco_brand = True
-        else:
-            sysco_brand = False
-
-        if gcp_prefix is not None:
-            img_path = f"gs://{GCS['BUCKET']}/{gcp_prefix}{entity_map[asset_id]}"
-        else:
-            img_path = xml_path.replace("assetProperties.xml", entity_map[asset_id])
-        asset_data.append({'supc': supc, 'description': desc, 'image_path': img_path,
-                           'published': published, 'sysco_brand': sysco_brand})
-    return asset_data
-
-
-def fetch_reference_images(local_folder=None, bucket=None):
+def fetch_reference_images(target_label):
 
     asset_data = []
+    client = storage.Client()
+    bucket_name = GCS["BUCKET"]
+    prefix = "reference_image_bank"
+    blobs = client.list_blobs(bucket_name, prefix=prefix)
+    for blob in blobs:
+        if blob.name == 'reference_image_bank/':
+            continue
 
-    if local_folder:
-        print(f"Fetching reference images from {local_folder}")
-        for folder in os.listdir(local_folder):
-            if folder.startswith("."):
-                continue
-            xml_file = f"{local_folder}/{folder}/assetProperties.xml"
-            asset_data = parse_assets(xml_file, asset_data)
+        label = blob.name.split("reference_image_bank/")[-1].split("/")[1].split("/")[0]
+        if label == target_label:
+            business_center = blob.name.split("reference_image_bank/")[-1].split("/")[0]
 
-    if bucket:
-        client = storage.Client()
-        bucket_name = GCS["BUCKET"]
-        prefix = "reference_images"
-        blobs = client.list_blobs(bucket_name, prefix=prefix)
-        for blob in blobs:
-            if 'buckhead_guide' in blob.name:
-                description = blob.name.split("/")[-1].split("_")[0]
-                path = f"gs://{bucket_name}/{blob.name}"
-                if 'PORK' in description:
-                    business_center = "Pork"
-                else:
-                    business_center = "Beef"
+            filename = blob.name.split("reference_image_bank/")[-1].split("/")[2]
+            supc = filename.split("_")[0]
+            description = filename.split("_")[1].split(".")[0]
+            path = f"gs://{bucket_name}/{blob.name}"
 
-                ref_img_dict = {'supc': '0000000',
-                                'description': description,
-                                'image_path': path,
-                                'sysco_brand': True,
-                                'published': False,}
-                asset_data.append(ref_img_dict)
-            elif 'url_images' in blob.name:
-                supc = blob.name.split("url_images/")[-1].split("_")[0]
-                description = blob.name.split("url_images/")[-1].split("_")[1].split(".")[0]
-                path = f"gs://{bucket_name}/{blob.name}"
-                if 'PORK' in description:
-                    business_center = "Pork"
-                else:
-                    business_center = "Beef"
-
-                ref_img_dict = {'supc': supc,
-                                'description': description,
-                                'image_path': path,
-                                # 'business_center': business_center,
-                                'sysco_brand': True,
-                                'published': False,}
-                asset_data.append(ref_img_dict)
-
-            if blob.name.endswith(".xml"):
-                temp_asset_file = "assets_temp.xml"
-                blob.download_to_filename(temp_asset_file)
-                blob_prefix = blob.name.replace("assetProperties.xml", "")
-                asset_data = parse_assets(temp_asset_file, asset_data, gcp_prefix=blob_prefix)
+            ref_img_dict = {'supc': supc,
+                            'description': description,
+                            'image_path': path,
+                            'business_center': business_center,
+                            'label': label,
+                            'sysco_brand': True,
+                            'published': False,}
+            asset_data.append(ref_img_dict)
 
     print(f"Collected {len(asset_data)} reference images.\n")
     return asset_data
@@ -175,6 +67,10 @@ def select_reference_images(products, asset_data):
         sim_desc = ""
         sim_img = None
         for asset_dict in asset_data:
+            if prod_info['product_category'] != asset_dict['business_center']:
+                continue
+            if prod_info['target_label'] != asset_dict['label']:
+                continue
             material_description = asset_dict['description']
             sem_sim = semantic_similarity(title, material_description)
 
@@ -210,10 +106,10 @@ def main():
         description='Generate lifestyle images for selected products using reference images.')
     parser.add_argument('--batch_job', type=str, default='default',
                         help='Name of batch job')
+    parser.add_argument('--target_label', type=str, default='STYLED',
+                        help='Target label for generated images')
     parser.add_argument('--input_product_file', type=str, default=DATA["INPUT_PRODUCT_FILE"],
                         help='JSONL file with product data')
-    parser.add_argument('--reference_img_folder', type=str, default=GCS["GCS_REFERENCE_URI"],
-                        help='Path to local reference images folder or GCS URI')
     parser.add_argument('--product_ids', type=str,
                         help='Product IDs separated by commas. E.g. "1234567,7654321,0987654')
 
@@ -224,7 +120,8 @@ def main():
     # Read input file and process product information
     print("Loading product information ...")
     input_product_file = args.input_product_file
-    product_dict = process_product_information(input_product_file)
+    target_label = args.target_label
+    product_dict = process_product_information(input_product_file, target_label)
 
     # Filtering by product ids
     if args.product_ids:
@@ -237,14 +134,8 @@ def main():
     print(f"Collected {len(product_dict)} products from product dict.\n")
 
     # # Fetch and select reference images
-    if args.reference_img_folder.startswith('gs://'):
-        print(f'Reading reference images from GCS: {GCS["BUCKET"]}/reference_images...')
-        asset_data = fetch_reference_images(bucket=GCS["BUCKET"])
-    elif args.reference_img_folder is not None:
-        print(f'Reading reference images from local directory: {DATA["REFERENCE_IMG_FOLDER"]}...')
-        asset_data = fetch_reference_images(local_folder=DATA["REFERENCE_IMG_FOLDER"])
-    else:
-        print("No reference image bucket selected")
+    print(f'Reading reference images from GCS: {GCS["BUCKET"]}/reference_image_bank...')
+    asset_data = fetch_reference_images(target_label)
     product_dict = select_reference_images(product_dict, asset_data)
 
     # Saving product dict (for parsing predictions)
