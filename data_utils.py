@@ -22,13 +22,13 @@ GCS = {
       }
 
 DATA = {
-        "REFERENCE_IMG_FOLDER": "/Users/carolinacaprile/Documents/sysco/image_generation/reference_images",
+        "REFERENCE_IMG_FOLDER": "/Users/carolinacaprile/Documents/sysco/image_generation/reference_image_bank",
         "PRODUCT_DICT_FILE": "product_dict.pkl",
         "INPUT_PRODUCT_FILE": "/Users/carolinacaprile/Documents/sysco/image_generation/input_protein.jsonl",
         "COS_SIM_THRESH": 0.85
        }
 
-def add_product_information(input_file, product_dict):
+def add_product_information(input_file, product_dict, target_label):
     # Create input file
     print("Adding product information ...")
     print(f"Processing input file: {input_file}")
@@ -66,9 +66,7 @@ def add_product_information(input_file, product_dict):
             product_dict[pid]["product_description"] = desc
             product_dict[pid]["product_category"] = cat
             product_dict[pid]["product_attributes"] = attr
-
-            print(attr)
-            print('-'*55)
+            product_dict[pid]["target_label"] = target_label
 
     print(f"Collected {len(product_dict)} products.\n")
     return product_dict
@@ -77,7 +75,7 @@ def nested_dict():
     return defaultdict(nested_dict)
 
 
-def process_product_information(input_file):
+def process_product_information(input_file, target_label):
     print(f"Processing input file: {input_file}")
     data = []
     with open(input_file, "r") as f:
@@ -110,6 +108,7 @@ def process_product_information(input_file):
         product_dict[pid]["product_description"] = desc
         product_dict[pid]["product_category"] = cat
         product_dict[pid]["product_attributes"] = attr
+        product_dict[pid]["target_label"] = target_label
 
     print(f"Collected {len(product_dict)} products from input file.\n")
     return product_dict
