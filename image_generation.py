@@ -7,6 +7,7 @@ from tqdm import tqdm
 import random
 import time
 
+from prompt_templates import *
 from rule_selection import *
 from parse_predictions import parse_generation_prediction, generation_preds_to_csv, download_locally
 from run_batch_job import monitor_batch_prediction_job, run_batch_prediction_job
@@ -45,7 +46,17 @@ def compose_prompts(product_dict, rule_selection=True):
         product_description = product_info['product_description']
         product_category = product_info['product_category']
         product_attributes = product_info['product_attributes']
+        target_label = product_info['target_label']
         cos_sim = product_info['generation']['reference_similarity']
+
+        if product_category in ['BEEF', 'POULTRY', 'SEAFOOD', 'PORK']:
+            group_category = 'PROTEINS'
+        else:
+            group_category = product_category
+
+        task = PROMPT_TEMPLATES[target_label][group_category]['TASK']
+        reference_instructions = PROMPT_TEMPLATES[target_label][group_category]['REFERENCE_IMG_INSTRUCTIONS']
+        composition_requirements = PROMPT_TEMPLATES[target_label][group_category]['COMPOSITION_REQUIREMENTS']
 
         relevant_rules = None
         if 'relevant_rules' in product_info['generation'].keys():
@@ -58,7 +69,7 @@ def compose_prompts(product_dict, rule_selection=True):
             except Exception as e:
                 print("Failed to select relevant rules for product {}".format(product_id))
                 print(e)
-                relevant_rules = PROTEIN_RULES[product_category]
+                relevant_rules = ACCURACY_RULES[target_label][product_category]
 
         product_attributes_str = ""
         for attr in product_attributes:
@@ -66,10 +77,7 @@ def compose_prompts(product_dict, rule_selection=True):
 
         if isinstance(cos_sim, float) and cos_sim >= DATA['COS_SIM_THRESH']:
             prompt = f"""
-                Task: Generate an accurate, high-quality, e-commerce-ready food photograph based on provided 
-                product data, accuracy rules and image instructions.
-                The food item should be in a cooked state and a styled setting.
-                The product information is factual and should be treated as ground truth when generating the image.
+                Task: {task}
                 
                 **PRODUCT INFORMATION**
                 Product ID: {product_id}
@@ -83,45 +91,29 @@ def compose_prompts(product_dict, rule_selection=True):
 
                 **IMAGE INSTRUCTIONS**
                 1. Using the provided image as a reference:
-                - Use the provided image strictly as a reference to the protein's physical characteristics 
-                (cut, shape, thickness, skin/bone presence, marbling, and muscle structure).  
-                - If the reference image depicts a raw product, ensure that the generated image depicts the same product in a cooked state.
-                - CRITICAL: Do not copy the background, props, lighting, or plating. Use a new lifestyle setting.
+                {reference_instructions}
                 
                 2. Composition Requirements:
-                - The product must be the primary visual focus, clearly visible and unobstructed.
-                - The entire dish must be fully visible in frame, with no cropping at the edges.
-                - The image must look like a real professional food photograph, with natural lighting, 
-                realistic textures, and accurate colors. 
-                - Avoid any artificial or computer-generated appearance.
-                - No humans or human hands visible, nor labels, writing or letters.
+                {composition_requirements}
             """
 
         else:
             prompt = f"""
-                Task: Generate an accurate, high-quality, e-commerce-ready food photograph based on provided
-                product data, accuracy rules and image instructions.
-                The food item should be in a cooked state and a styled setting.
-                The product information is factual and should be treated as ground truth when generating the image.
-
+                Task: {task}
+                
                 **PRODUCT INFORMATION**
-                Product ID: {product_id}##
+                Product ID: {product_id}
                 Product Title: "{product_title}".
                 Product Description: "{product_description}".
                 Product Attributes: {product_attributes_str}
-
+                
                 **ACCURACY RULES**
                 The final image must depict the product exactly as described, respecting the following:
                 {relevant_rules}
 
                 **IMAGE INSTRUCTIONS**
-                Composition Requirements:
-                - The product must be the primary visual focus, clearly visible and unobstructed.
-                - The entire dish must be fully visible in frame, with no cropping at the edges.
-                - The image must look like a real professional food photograph, with natural lighting,
-                realistic textures, and accurate colors.
-                - Avoid any artificial or computer-generated appearance.
-                - No humans or human hands visible, nor labels, writing or letters.
+                1. Composition Requirements:
+                {composition_requirements}
             """
         product_dict[product_id]['generation']['prompt'] = prompt
         product_dict[product_id]['generation']['accuracy_rules'] = relevant_rules
